@@ -3,6 +3,8 @@ package com.enesoral.moviecatalogservice.resources;
 import com.enesoral.moviecatalogservice.models.CatalogItem;
 import com.enesoral.moviecatalogservice.models.Movie;
 import com.enesoral.moviecatalogservice.models.Rating;
+import com.enesoral.moviecatalogservice.models.UserRating;
+import org.apache.catalina.User;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,30 +20,31 @@ import java.util.stream.Collectors;
 public class MovieCatalogResource {
 
     private final RestTemplate restTemplate;
-    private final WebClient.Builder webClientBuilder;
 
-    public MovieCatalogResource(RestTemplate restTemplate, WebClient.Builder webClientBuilder) {
+    public MovieCatalogResource(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.webClientBuilder = webClientBuilder;
     }
 
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
 
-        List<Rating> ratings = Arrays.asList(
-                new Rating("1234", 4),
-                new Rating("5678", 3)
-        );
+        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratings/user/" + userId, UserRating.class);
 
-        return ratings.stream().map(rating -> {
-                //Movie movie = restTemplate.getForObject("localhost:8082/movies/" + rating.getMovieId(), Movie.class);
-                Movie movie = webClientBuilder.build()
+        return userRating.getUserRatings().stream().map(rating -> {
+
+                Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId(), Movie.class);
+                return new CatalogItem(movie.getName(), "Test description", rating.getRating());
+
+        }).collect(Collectors.toList());
+    }
+}
+
+
+/* Alternative way to call api
+Movie movie = webClientBuilder.build()
                         .get()
                         .uri("localhost:8082/movies/" + rating.getMovieId())
                         .retrieve()
                         .bodyToMono(Movie.class)
                         .block();
-                return new CatalogItem(movie.getName(), "Test description", rating.getRating());
-        }).collect(Collectors.toList());
-    }
-}
+*/
