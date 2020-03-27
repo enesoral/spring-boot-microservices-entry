@@ -2,16 +2,12 @@ package com.enesoral.moviecatalogservice.resources;
 
 import com.enesoral.moviecatalogservice.models.CatalogItem;
 import com.enesoral.moviecatalogservice.models.Movie;
-import com.enesoral.moviecatalogservice.models.Rating;
 import com.enesoral.moviecatalogservice.models.UserRating;
-import org.apache.catalina.User;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +29,7 @@ public class MovieCatalogResource {
         return userRating.getUserRatings().stream().map(rating -> {
 
                 Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId(), Movie.class);
-                return new CatalogItem(movie.getName(), "Test description", rating.getRating());
+                return new CatalogItem(movie.getTitle(), movie.getOverview(), rating.getRating());
 
         }).collect(Collectors.toList());
     }
